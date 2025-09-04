@@ -3,6 +3,25 @@
 ## Requirements: 
 
 - Linux environment, will likely not work on Windows
+- Docker 
+
+## EMQX Broker 
+
+Run the EMQX broker instance locally using Docker:
+```bash
+$ sudo docker run -d --name emqx -p 1883:1883 -p 8083:8083 -p 8883:8883 -p 18083:18083 emqx/emqx:latest
+```
+
+The web interface can be accessed then via `https://localhost:18083`
+
+To shut down the Docker container:
+
+```bash
+$ sudo docker ps # List all running docker containers
+CONTAINER ID   IMAGE            COMMAND   CREATED   STATUS    PORTS     NAMES
+9f548271ad47   emqx/emqx:latest ...       ...       ...       ...       emqx
+$ sudo docker container stop emqx
+```
 
 ## Dependencies
 
