@@ -23,6 +23,8 @@ CONTAINER ID   IMAGE            COMMAND   CREATED   STATUS    PORTS     NAMES
 $ sudo docker container stop emqx
 ```
 
+
+
 ## Dependencies
 
 Run the following script to install and build the dependencies:
@@ -31,8 +33,20 @@ Run the following script to install and build the dependencies:
 $ sh install_deps.sh
 ```
 
+If the Paho C and C++ libraries are already installed on the system, rebuilding can be skipped by
+
+```bash
+$ sh install_deps.sh --skip-paho
+```
+
 ## Build the project 
 
 ```bash
 $ sh install.sh
+```
+
+If Ninja is installed on the system, the build process can be sped up by: 
+
+```bash
+$ sh install.sh --ninja
 ```
