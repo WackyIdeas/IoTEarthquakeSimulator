@@ -3,10 +3,15 @@
 echo "Downloading JSON C++ library..."
 curl -L https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz > json.tar.xz
 tar -xf json.tar.xz
+rm json.tar.xz
+
+if [[ "$*" == *"--skip-paho"* ]]
+then
+    exit
+fi
 
 git clone https://github.com/eclipse/paho.mqtt.c.git
 git clone https://github.com/eclipse/paho.mqtt.cpp
-
 # Build C library, install it globally
 echo "Building Paho C library..."
 cd paho.mqtt.c

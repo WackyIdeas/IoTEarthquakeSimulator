@@ -1,0 +1,4 @@
+add_subdirectory(status)
+add_subdirectory(sensors)
+add_subdirectory(actuators)
+add_subdirectory(controller)
