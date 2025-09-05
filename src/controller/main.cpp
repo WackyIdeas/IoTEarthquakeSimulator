@@ -11,6 +11,13 @@ class callback : public virtual mqtt::callback
         // TODO: Figure out conditions to trigger alarm
         std::cout << "Message received: " << msg->get_payload_str() << std::endl;
 
+        std::string test = "{ \"timestamp\": \"2025-12-20 05:20\", \"state\": \"Critical\" }";
+        if(parent)
+        {
+            log(parent->name(), "Publishing test to LED alarm");
+            parent->publish(LED_TOPIC, test);
+        }
+
         // Publish messages here like this:
         /*
          * if(parent)

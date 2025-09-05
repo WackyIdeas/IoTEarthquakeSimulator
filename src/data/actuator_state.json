@@ -1,2 +1,6 @@
-{ "LEDAlarm": "OFF" }
+[
+    { "timestamp": "2025-12-20 05:20", "state": "Low" },
+    { "timestamp": "2025-12-20 05:20", "state": "Warning" },
+    { "timestamp": "2025-12-20 05:20", "state": "Critical" }
+]
 

@@ -51,7 +51,7 @@ bool Client::publish(std::string topic, std::string payload, int qos, bool retai
     try
     {
         mqtt::message_ptr pubmsg = mqtt::make_message(topic, payload, qos, retain);
-        m_client->publish(pubmsg)->wait();
+        m_client->publish(pubmsg);
         log(m_name, std::string("Message published: ") + payload);
     }
     catch(mqtt::exception &e)
