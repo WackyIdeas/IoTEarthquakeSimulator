@@ -27,6 +27,15 @@ $ sudo docker container stop emqx
 
 ## Dependencies
 
+- cmake
+- curl
+- ninja (Optional)
+
+Ubuntu: 
+```bash
+sudo apt install curl cmake ninja-build
+```
+
 Run the following script to install and build the dependencies:
 
 ```bash
