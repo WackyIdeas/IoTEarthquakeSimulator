@@ -12,6 +12,7 @@ Client::~Client()
 
 bool Client::connectClient()
 {
+    // Boilerplate for connection establishment
     mqtt::connect_options connOpts;
     connOpts.set_keep_alive_interval(20);
     connOpts.set_clean_session(true);
@@ -21,7 +22,7 @@ bool Client::connectClient()
         log(m_name, "Connected to broker successfully");
         m_connected = true;
     }
-    catch(mqtt::exception &e)
+    catch(mqtt::exception &e) // Gracefully handle exceptions
     {
         log(m_name, e.what(), true);
         return false;
