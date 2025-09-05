@@ -10,19 +10,14 @@ class callback : public virtual mqtt::callback
         // TODO: publish sensor data to status and actuator nodes
         // TODO: Figure out conditions to trigger alarm
         std::cout << "Message received: " << msg->get_payload_str() << std::endl;
-
+        // cool
         std::string test = "{ \"timestamp\": \"2025-12-20 05:20\", \"state\": \"Critical\" }";
         if(parent)
         {
             log(parent->name(), "Publishing test to LED alarm");
-            parent->publish(LED_TOPIC, test);
+            parent->publish(LED_TOPIC, test, 1, true);
         }
 
-        // Publish messages here like this:
-        /*
-         * if(parent)
-         *      parent->publish("payload");
-         */
     }
 public:
     void setParent(Client* c)
