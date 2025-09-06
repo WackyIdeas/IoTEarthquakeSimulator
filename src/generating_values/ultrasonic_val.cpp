@@ -3,7 +3,7 @@
 
 // Gauss function
 double f(double x, double s) {
-    return 0.5 * std::exp(-(x*x)/(2*s*s));
+    return 25 * std::exp(-(x*x)/(2*s*s));
 }
 
 // Function
@@ -26,7 +26,7 @@ void sampleG(int N, double s, double x_min, double x_max, double threshold=0.000
             y = 0.0;
         }
 
-        std::cout << "{ \"acceleration_g\": " << y << " }," << std::endl;
+        std::cout << "{ \"distance_cm\": " << y << " }," << std::endl;
     }
 }
 
