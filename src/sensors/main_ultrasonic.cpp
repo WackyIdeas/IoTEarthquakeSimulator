@@ -4,7 +4,7 @@
 
 int main()
 {
-    Sensor ultrasonic("../data/ultrasonic.json", 2);
+    Sensor ultrasonic("../data/ultrasonic.json", 500);
 
     if(!ultrasonic.loaded())
     {

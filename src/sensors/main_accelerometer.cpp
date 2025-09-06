@@ -4,7 +4,7 @@
 
 int main()
 {
-    Sensor accelerometer("../data/accelerometer.json", 2);
+    Sensor accelerometer("../data/accelerometer.json", 500);
 
     if(!accelerometer.loaded())
     {
@@ -26,7 +26,7 @@ int main()
         }
         client.publish(ACCEL_TOPIC, sample);
         log(client.name(), std::string("Sent sample: ") + sample);
-        std::this_thread::sleep_for(std::chrono::seconds(accelerometer.period()));
+        std::this_thread::sleep_for(std::chrono::milliseconds(accelerometer.period()));
     }
 
     log(client.name(), "Finished simulation.");

@@ -4,26 +4,33 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+const std::string clientname = "sub_led";
+
 class callback : public virtual mqtt::callback
 {
     std::string dataset = "../data/actuator_state.json";
     void message_arrived(mqtt::const_message_ptr msg) override
     {
-        //TODO write actuator data to JSON file data/actuator_state.json
-        //std::cout << "[ALARM] LED ON" << std::endl;
-        //std::cout << "[ALARM] LED OFF" << std::endl;
-        std::cout << "Message received: " << msg->get_payload_str() << std::endl;
-
         try
         {
+            log(clientname, std::string("Message received: ") + msg->get_payload_str());
             json obj = json::parse(msg->get_payload_str()); // Parse incoming message
             std::ifstream in(dataset);  // Load actuator_state.json
             json target;
-            in >> target;
+            try
+            {
+                target = json::parse(in);
+            }
+            catch (json::exception &e)
+            {
+                target = json::parse("[]");
+            }
+
 
             target.push_back(obj); // Append to deserialized actuator_state.json
             std::ofstream of(dataset); // Serialize and write target to actuator_state.json
             of << std::setw(4) << target << std::endl; // Pretty print for readability
+            log(clientname, "Written to JSON file");
 
         }
         catch (json::exception &e)
@@ -36,7 +43,7 @@ class callback : public virtual mqtt::callback
 
 int main()
 {
-    Client client("sub_led");
+    Client client(clientname);
 
     if(!client.connectClient())
     {
