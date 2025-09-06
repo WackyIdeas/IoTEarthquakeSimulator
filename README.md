@@ -7,9 +7,15 @@
 
 ## EMQX Broker 
 
-Run the EMQX broker instance locally using Docker:
+Running the EMQX broker instance for the first time:
 ```bash
 $ sudo docker run -d --name emqx -p 1883:1883 -p 8083:8083 -p 8883:8883 -p 18083:18083 emqx/emqx:latest
+```
+
+If an EMQX instance was previously created this way, running the instance again simply becomes:
+
+```bash
+$ sudo docker container start emqx
 ```
 
 The web interface can be accessed then via `https://localhost:18083`
