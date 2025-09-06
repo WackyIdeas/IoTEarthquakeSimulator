@@ -13,7 +13,6 @@ class callback : public virtual mqtt::callback
     {
         try
         {
-
             if(msg->get_topic() == ACCEL_TOPIC)
             {
                 accelerometer_data = json::parse(msg->get_payload_str());
@@ -34,18 +33,36 @@ class callback : public virtual mqtt::callback
             json target;
             target["timestamp"] = ts;
 
-            std::string actuatorstate;
             // Logic
+            std::string actuatorstate;
             int threshold_accel = 0;
             int threshold_ultra = 0;
 
-            // g < 0.05 -> 0
-            // 0.05 <= g < 0.1 -> 1
-            // g > 0.1 -> 3
-
-            // d < 2.5 -> 0
-            // 2.5 <= d < 5 -> 1
-            // d >= 5 -> 2
+            /*
+             * The logic that decides when to activate the LED alarm
+             * depends on two threshold values for the two sensors.
+             *
+             * The total threshold is defined as the sum of the two
+             * thresholds, and the LED alarm gets the following messages
+             * depending on the value of the threshold:
+             *
+             * 0 -> Safe
+             * 1-2 -> Warning
+             * 3+ -> Critical
+             *
+             * The logic that calculates the sensor thresholds is:
+             *
+             * Accelerometer threshold:
+             * g < 0.05 -> 0
+             * 0.05 <= g < 0.1 -> 1
+             * g > 0.1 -> 3
+             *
+             * Ultrasonic threshold:
+             * d < 2.5 -> 0
+             * 2.5 <= d < 5 -> 1
+             * d >= 5 -> 2
+             *
+             */
 
             if(!accelerometer_data.is_null())
             {
@@ -69,6 +86,7 @@ class callback : public virtual mqtt::callback
                     threshold_ultra = 2;
             }
 
+            // Calculate total threshold values
             int total_threshold = threshold_accel + threshold_ultra;
             if(total_threshold == 0)
             {
@@ -93,6 +111,7 @@ class callback : public virtual mqtt::callback
             target["state"] = actuatorstate;
             status["severity"] = total_threshold;
 
+            // Publish messages, with sanity checks
             if(parent)
             {
                 log(parent->name(), std::string("Message received: ") + msg->get_payload_str());
