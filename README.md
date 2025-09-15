@@ -66,6 +66,10 @@ If Ninja is installed on the system, the build process can be sped up by:
 $ sh install.sh --ninja
 ```
 
+# Notes
+
+- SSDP must be enabled in the firewall in order for SSDP discovery to work
+
 # Credits 
 
 - [lssdp-cpp](https://github.com/jeanreP/lssdp-cpp)
