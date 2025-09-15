@@ -3,6 +3,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+bool accelerometer_online = false, ultrasonic_online = false;
+
 class callback : public virtual mqtt::callback
 {
     // Keep a reference of the parent client
@@ -65,7 +67,7 @@ class callback : public virtual mqtt::callback
              *
              */
 
-            if(!accelerometer_data.is_null())
+            if((accelerometer_online) && (!accelerometer_data.is_null()))
             {
                 double g = accelerometer_data["acceleration_g"];
                 if(g < 0.05)
@@ -76,7 +78,7 @@ class callback : public virtual mqtt::callback
                     threshold_accel = 3;
             }
 
-            if(!ultrasonic_data.is_null())
+            if((ultrasonic_online) && (!ultrasonic_data.is_null()))
             {
                 double d = ultrasonic_data["distance_cm"];
                 if(d < 2.5)
@@ -187,6 +189,12 @@ int main()
                 {
                     log(client.name(), "Received message from service:");
                     std::cout << update_event << std::endl;
+
+                    std::string device = update_event._service_description.getDeviceType();
+                    if(device.find("ultrasonic") != std::string::npos)
+                        ultrasonic_online = true;
+                    else if(device.find("accelerometer") != std::string::npos)
+                        accelerometer_online = true;
                 },
                 std::chrono::seconds(1)); // Timeout after 1 second
         } while(runssdp);
