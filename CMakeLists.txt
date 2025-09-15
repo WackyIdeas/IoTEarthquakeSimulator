@@ -7,6 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(JSON_INCLUDE "json/include/")
 include_directories(${JSON_INCLUDE})
-find_package(PahoMqttCpp)
+find_package(PahoMqttCpp REQUIRED)
 
 add_subdirectory(src)

@@ -3,7 +3,8 @@ add_executable(IoTAccelerometer ../shared.cpp ../client.cpp sensor.cpp main_acce
 
 target_link_libraries(IoTUltrasonic
     PahoMqttCpp::paho-mqtt3a
-    PahoMqttCpp::paho-mqttpp3-shared)
+    PahoMqttCpp::paho-mqttpp3-shared
+    lssdpcpp)
 target_link_libraries(IoTAccelerometer
     PahoMqttCpp::paho-mqtt3a
     PahoMqttCpp::paho-mqttpp3-shared)

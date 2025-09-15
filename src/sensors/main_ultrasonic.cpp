@@ -1,6 +1,7 @@
 #include "../shared.h"
 #include "sensor.h"
 #include <thread>
+#include "../ssdp/lssdpcpp/lssdpcpp.h"
 
 int main()
 {

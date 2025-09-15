@@ -65,3 +65,7 @@ If Ninja is installed on the system, the build process can be sped up by:
 ```bash
 $ sh install.sh --ninja
 ```
+
+# Credits 
+
+- [lssdp-cpp](https://github.com/jeanreP/lssdp-cpp)
