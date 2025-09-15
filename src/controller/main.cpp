@@ -1,4 +1,5 @@
 #include "../shared.h"
+#include <thread>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -153,8 +154,54 @@ int main()
     client.subscribe(ACCEL_TOPIC);
     client.subscribe(ULTRA_TOPIC);
 
-    log(client.name(), "Monitoring sensors, press Return to exit.");
-    std::cin.get();
+    // Init SSDP controller
+    lssdp::ServiceFinder ssdpController(
+        BROADCAST_LOCATION,
+        "IoTController",
+        "1.0",
+        ""
+    );
+
+
+    bool runssdp = true;
+    /*std::thread(
+        [&]
+        {*/
+            try
+            {
+                std::chrono::seconds msearch_period = std::chrono::seconds(5);
+                auto time = std::chrono::system_clock::now();
+
+                // Send MSearch for the first time as a sanity check
+                if (!ssdpController.sendMSearch()) log(client.name(), ssdpController.getLastSendErrors(), true);
+
+                do
+                {
+                    auto time_now = std::chrono::system_clock::now();
+                    if((time_now - time) >= msearch_period)
+                    {
+                        time = time_now;
+                        log(client.name(), "Querying services via SSDP...");
+                        ssdpController.sendMSearch();
+                    }
+
+                    ssdpController.checkForServices(
+                        [&](const lssdp::ServiceFinder::ServiceUpdateEvent& update_event)
+                        {
+                            log(client.name(), "Received message from service:");
+                            std::cout << update_event << std::endl;
+                        },
+                        std::chrono::seconds(1)); // Timeout after 1 second
+                } while(runssdp);
+
+            }
+            catch(std::exception &e)
+            {
+                log(client.name(), e.what(), true); // Log
+                runssdp = false;
+            }
+        /*}
+    ).detach();*/
 
     client.disconnectClient();
     return 0;
