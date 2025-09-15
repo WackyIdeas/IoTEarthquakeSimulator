@@ -1,7 +1,8 @@
 add_executable(IoTActuator ../shared.cpp ../client.cpp main.cpp)
 target_link_libraries(IoTActuator
     PahoMqttCpp::paho-mqtt3a
-    PahoMqttCpp::paho-mqttpp3-shared)
+    PahoMqttCpp::paho-mqttpp3-shared
+    lssdpcpp)
 
 include(GNUInstallDirs)
 install(TARGETS IoTActuator

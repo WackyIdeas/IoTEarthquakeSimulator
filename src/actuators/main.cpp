@@ -55,8 +55,37 @@ int main()
 
     client.subscribe(LED_TOPIC);
 
-    log(client.name(), "Monitoring status, press Return to exit.");
-    std::cin.get();
+    lssdp::Service ledService(BROADCAST_LOCATION,
+        std::chrono::seconds(SERVICE_MAX_AGE),
+        "building/led",
+        "service/led",
+        "led",
+        "IoTActuator",
+        "1.0"
+    );
+
+    bool runssdp = true;
+
+    try
+    {
+        ledService.sendNotifyAlive();
+        do
+        {
+            log(clientname, "Checking for MSearch queries...");
+            if(!ledService.checkForMSearchAndSendResponse(std::chrono::seconds(1)))
+            {
+                log(clientname, ledService.getLastSendErrors(), true);
+            }
+
+        } while(runssdp);
+    }
+    catch(std::exception &e)
+    {
+        log(clientname, e.what(), true);
+        runssdp = false;
+    }
+
+    ledService.sendNotifyByeBye();
 
     client.disconnectClient();
     return 0;

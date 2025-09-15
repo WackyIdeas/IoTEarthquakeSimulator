@@ -20,7 +20,7 @@
 #define LED_TOPIC "building/led"
 
 #define BROADCAST_LOCATION "http://239.255.255.250:1900"
-
+#define SERVICE_MAX_AGE 3600
 
 // Get formatted timestamp for logging purposes
 std::string getTimestamp();
