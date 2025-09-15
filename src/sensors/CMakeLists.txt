@@ -1,5 +1,5 @@
-add_executable(IoTUltrasonic ../shared.cpp ../client.cpp sensor.cpp main_ultrasonic.cpp)
-add_executable(IoTAccelerometer ../shared.cpp ../client.cpp sensor.cpp main_accelerometer.cpp)
+add_executable(IoTUltrasonic ../shared.cpp ../client.cpp sensor.cpp ../service.cpp main_ultrasonic.cpp)
+add_executable(IoTAccelerometer ../shared.cpp ../client.cpp sensor.cpp ../service.cpp main_accelerometer.cpp)
 
 target_link_libraries(IoTUltrasonic
     PahoMqttCpp::paho-mqtt3a
@@ -7,7 +7,8 @@ target_link_libraries(IoTUltrasonic
     lssdpcpp)
 target_link_libraries(IoTAccelerometer
     PahoMqttCpp::paho-mqtt3a
-    PahoMqttCpp::paho-mqttpp3-shared)
+    PahoMqttCpp::paho-mqttpp3-shared
+    lssdpcpp)
 
 include(GNUInstallDirs)
 install(TARGETS IoTUltrasonic

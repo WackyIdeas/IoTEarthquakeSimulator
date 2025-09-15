@@ -1,10 +1,25 @@
 #include "../shared.h"
+#include "../service.h"
 #include "sensor.h"
 #include <thread>
+#include <signal.h>
+#include "../ssdp/lssdpcpp/lssdpcpp.h"
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+Service *ref = nullptr;
+void sigintHandler(int dummy)
+{
+    if(ref)
+    {
+        ref->byebye();
+    }
+    exit(0);
+}
 
 int main()
 {
-    Sensor accelerometer("../data/accelerometer.json", 500);
+    Sensor accelerometer("../data/accelerometer.json", 1000);
 
     if(!accelerometer.loaded())
     {
@@ -16,6 +31,24 @@ int main()
     {
         return 1;
     }
+
+    Service accelerometerService(
+        "building/accelerometer",   
+        "service/accelerometer",    
+        "accelerometer",            
+        "IoTSensor",             
+        "1.0"                    
+    );
+
+    ref = &accelerometerService;
+    signal(SIGINT, sigintHandler);
+
+    std::thread ssdpThread([&](){
+    if(!accelerometerService.listenToBroadcast())
+    {
+        log("pub_accelerometer", "Something wrong happened with SSDP discovery", true);
+    }
+    });
 
     while(!accelerometer.reachedEnd())
     {
@@ -30,6 +63,8 @@ int main()
     }
 
     log(client.name(), "Finished simulation.");
+
+    accelerometerService.byebye();
     client.disconnectClient();
     return 0;
 }
