@@ -1,11 +1,22 @@
 #include "../shared.h"
+#include "../service.h"
 
+#include <signal.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 const std::string clientname = "sub_led";
 
+Service *ref = nullptr;
+void sigintHandler(int dummy)
+{
+    if(ref)
+    {
+        ref->byebye();
+    }
+    exit(0);
+}
 class callback : public virtual mqtt::callback
 {
     std::string dataset = "../data/actuator_state.json";
@@ -55,37 +66,23 @@ int main()
 
     client.subscribe(LED_TOPIC);
 
-    lssdp::Service ledService(BROADCAST_LOCATION,
-        std::chrono::seconds(SERVICE_MAX_AGE),
+    Service ledService(
         "building/led",
         "service/led",
         "led",
         "IoTActuator",
         "1.0"
-    );
+        );
 
-    bool runssdp = true;
+    ref = &ledService;
 
-    try
+    signal(SIGINT, sigintHandler);
+
+    if(!ledService.listenToBroadcast())
     {
-        ledService.sendNotifyAlive();
-        do
-        {
-            log(clientname, "Checking for MSearch queries...");
-            if(!ledService.checkForMSearchAndSendResponse(std::chrono::seconds(1)))
-            {
-                log(clientname, ledService.getLastSendErrors(), true);
-            }
-
-        } while(runssdp);
+        log(clientname, "Something wrong happened with SSDP discovery", true);
+        return -1;
     }
-    catch(std::exception &e)
-    {
-        log(clientname, e.what(), true);
-        runssdp = false;
-    }
-
-    ledService.sendNotifyByeBye();
 
     client.disconnectClient();
     return 0;
