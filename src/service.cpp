@@ -11,7 +11,7 @@ void Service::byebye()
 }
 Service::Service(std::string location, std::string uid, std::string search_target, std::string productName, std::string version)
 {
-    m_service = new lssdp::Service(BROADCAST_LOCATION,
+    m_service = new lssdp::Service(lssdp::LSSDP_DEFAULT_URL,
         std::chrono::seconds(SERVICE_MAX_AGE),
         location,
         uid,

@@ -174,7 +174,7 @@ int main()
 
     // Init SSDP controller
     lssdp::ServiceFinder ssdpController(
-        BROADCAST_LOCATION,
+        lssdp::LSSDP_DEFAULT_URL,
         "IoTController",
         "1.0",
         ""
