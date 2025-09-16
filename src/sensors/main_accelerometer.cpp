@@ -7,6 +7,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+// Code is mostly similar to the ultrasonic sensor, for more details, read main_ultrasonic.cpp
+
 Service *ref = nullptr;
 void sigintHandler(int dummy)
 {

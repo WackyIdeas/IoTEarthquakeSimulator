@@ -11,10 +11,11 @@ class callback : public virtual mqtt::callback
     Client *parent;
     json accelerometer_data;
     json ultrasonic_data;
+
+    // Keep track of which node is online and discovered
     bool accelerometer_online = false;
     bool ultrasonic_online = false;
     bool actuator_online = false;
-
     std::string severity_status = "N/A";
 
     void message_arrived(mqtt::const_message_ptr msg) override
@@ -159,6 +160,8 @@ public:
 
 int main()
 {
+    // As the broker is hosted on the same device as this
+    // program, we can use localhost here.
     Client client("controller", "tcp://localhost:1883");
     if(!client.connectClient())
     {
@@ -184,12 +187,13 @@ int main()
     bool runssdp = true;
     try
     {
+        // Send M-Search queries every 5 seconds
         std::chrono::seconds msearch_period = std::chrono::seconds(5);
         auto time = std::chrono::system_clock::now();
 
         // Send MSearch for the first time as a sanity check
         if (!ssdpController.sendMSearch()) log(client.name(), ssdpController.getLastSendErrors(), true);
-
+        // Run the main SSDP loop. This works because MQTT subscriptions run in separate threads.
         do
         {
             auto time_now = std::chrono::system_clock::now();
@@ -200,17 +204,25 @@ int main()
                 ssdpController.sendMSearch();
             }
 
+            /*
+             * In case checkForServices returns true, we can update
+             * the status of all intended nodes on this system.
+             * Send the status to the status viewer via MQTT.
+             */
             if(ssdpController.checkForServices(
                 [&](const lssdp::ServiceFinder::ServiceUpdateEvent& update_event)
                 {
                     log(client.name(), "Received message from service:");
                     std::cout << update_event << std::endl;
 
+                    // Identify services by their unique service name. SSDP guarantees that at least this
+                    // identifier is present in the OK response
                     std::string device = update_event._service_description.getUniqueServiceName();
-                    log(client.name(), device);
 
+                    // Treat service as enabled if the received message is an OK response or ssdp:alive
                     bool serviceEnabled = update_event._event_id == lssdp::ServiceFinder::ServiceUpdateEvent::UpdateEvent::response || update_event._event_id == lssdp::ServiceFinder::ServiceUpdateEvent::UpdateEvent::notify_alive;
 
+                    // Enable/disable specific service based on the service identifier
                     if(device == ULTRA_SERVICE)
                     {
                         cb.setUltrasonicOnline(serviceEnabled);
@@ -224,7 +236,7 @@ int main()
                         cb.setActuatorOnline(serviceEnabled);
                     }
                 },
-                std::chrono::seconds(1)))
+                std::chrono::seconds(1))) // Timeout is set to 1 second
                 {
                     // Publish to status topic
                     auto ts = getTimestamp();
@@ -238,13 +250,13 @@ int main()
                     {
                         client.publish(STATUS_TOPIC, status.dump(), 1, true);
                     }
-                } // Timeout after 1 second
+                }
         } while(runssdp);
 
     }
     catch(std::exception &e)
     {
-        log(client.name(), e.what(), true); // Log
+        log(client.name(), e.what(), true); // Log exception
         runssdp = false;
     }
 

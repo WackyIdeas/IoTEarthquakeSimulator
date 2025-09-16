@@ -3,6 +3,9 @@
 
 #include "shared.h"
 
+/*
+ * Wrapper class for SSDP services
+ */
 class Service
 {
 public:

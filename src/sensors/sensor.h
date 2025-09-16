@@ -12,7 +12,7 @@ using json = nlohmann::json;
  * iteratively provides samples on demand. This should
  * be done with a while loop that depends on the
  * reachedEnd() method, and a sleep method that blocks
- * execution for period() seconds, to simulate new
+ * execution for period() milliseconds, to simulate new
  * messages coming in at regular intervals.
  */
 class Sensor

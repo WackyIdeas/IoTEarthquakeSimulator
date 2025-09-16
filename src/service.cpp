@@ -6,6 +6,7 @@ void Service::byebye()
     if(m_service)
     {
         log(m_uid, "Closing client");
+        // Send ssdp::byebye before being destroyed
         m_service->sendNotifyByeBye();
     }
 }
@@ -24,6 +25,7 @@ Service::Service(std::string location, std::string uid, std::string search_targe
 
     try
     {
+        // Send ssdp::notify on creation
         m_service->sendNotifyAlive();
     }
     catch(std::exception &e)
@@ -43,6 +45,12 @@ Service::~Service()
 bool Service::listenToBroadcast(std::string *sender_addr)
 {
     if(!m_running) return false;
+    /*
+     * Listen to the broadcast for M-Search methods, and respond
+     * accordingly to them. The root controller (sender) will also
+     * host the MQTT broker, so it's important to remember the IP
+     * address.
+     */
     try
     {
         log(m_uid, "Checking for MSearch queries...");

@@ -8,6 +8,7 @@ using json = nlohmann::json;
 
 const std::string clientname = "sub_led";
 
+// Intercept SIGINT (Ctrl-C) signal in order to send ssdp:byebye before the application closes
 Service *ref = nullptr;
 void sigintHandler(int dummy)
 {
@@ -19,7 +20,6 @@ void sigintHandler(int dummy)
 }
 class callback : public virtual mqtt::callback
 {
-    std::string serverAddr = "";
     std::string dataset = "../data/actuator_state.json";
     void message_arrived(mqtt::const_message_ptr msg) override
     {
@@ -51,11 +51,6 @@ class callback : public virtual mqtt::callback
         }
 
     }
-public:
-    void setServerAddr(std::string s)
-    {
-        serverAddr = s;
-    }
 };
 
 int main()
@@ -73,28 +68,30 @@ int main()
         "1.0"
         );
 
+    // Setup Ctrl-C intercept
     ref = &ledService;
-
     signal(SIGINT, sigintHandler);
 
     bool serviceStarted = false;
+
+    // Periodically listen to the SSDP brd IP for M-Search messages
     while(ledService.listenToBroadcast(&serverAddr))
     {
         log("ssdp", "MSearch successful");
+        // In case the server address is found, connect to its device's MQTT broker
         if(!serviceStarted && serverAddr != "")
         {
             log("ssdp", std::string("Connecting to MQTT Broker ") + serverAddr);
-            client = new Client(clientname, serverAddr);
             serviceStarted = true;
+            client = new Client(clientname, serverAddr);
             log(client->name(), "Starting MQTT service");
-            if(!client->connectClient())
+            if(!client->connectClient()) // Failed to connect to MQTT broker
             {
                 ledService.byebye();
                 return 1;
             }
-            cb.setServerAddr(serverAddr);
-            client->setCallback(cb);
-            client->subscribe(LED_TOPIC);
+            client->setCallback(cb); // Set subscription callback
+            client->subscribe(LED_TOPIC); // Subscribe to actuator topic
         }
     }
 

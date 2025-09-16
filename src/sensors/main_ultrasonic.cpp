@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+// Intercept SIGINT (Ctrl-C) signal in order to send ssdp:byebye before termination
 Service *ref = nullptr;
 void sigintHandler(int dummy)
 {
@@ -28,7 +29,13 @@ int main()
         "IoTSensor",
         "1.0"
     );
+    /*
+     * The main service is activated upon SSDP discovery.
+     * When the root controller discovers this device, it runs
+     * the service in a detached thread.
+     */
     auto mqttService = [&]() -> int {
+        // Load simulated data, set sampling period to 1000ms
         Sensor ultrasonic("../data/ultrasonic.json", 1000);
 
         if(!ultrasonic.loaded())
@@ -38,6 +45,7 @@ int main()
             return 1;
         }
 
+        // Initiate MQTT node
         Client client("pub_ultrasonic", serverAddr);
         if(!client.connectClient())
         {
@@ -45,7 +53,7 @@ int main()
             finishedSimulation = true;
             return 1;
         }
-
+        // Perform the main simulation loop
         while(!ultrasonic.reachedEnd())
         {
             std::string sample = ultrasonic.getSample();
@@ -53,6 +61,7 @@ int main()
             {
                 break;
             }
+            // Send simulated data to MQTT topic
             client.publish(ULTRA_TOPIC, sample);
             log(client.name(), std::string("Sent sample: ") + sample);
             std::this_thread::sleep_for(std::chrono::milliseconds(ultrasonic.period()));
@@ -65,9 +74,11 @@ int main()
 
     };
 
+    // Setup SIGINT handler
     ref = &ultrasonicService;
     signal(SIGINT, sigintHandler);
 
+    // Listen for M-Search messages
     bool serviceStarted = false;
     while(!finishedSimulation && ultrasonicService.listenToBroadcast(&serverAddr))
     {
@@ -77,6 +88,7 @@ int main()
             log("ssdp", std::string("Connecting to MQTT Broker ") + serverAddr);
             log("mqtt", "Starting MQTT service...");
             serviceStarted = true;
+            // Run the MQTT service as a detached thread
             std::thread(mqttService).detach();
         }
     }
