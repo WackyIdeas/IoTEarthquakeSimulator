@@ -198,20 +198,14 @@ int main()
                     log(client.name(), "Received message from service:");
                     std::cout << update_event << std::endl;
 
-                    std::cout << "BRUH\n";
                     std::string device = update_event._service_description.getUniqueServiceName();
                     log(client.name(), device);
 
+                    bool serviceEnabled = update_event._event_id == ServiceUpdateEvent::UpdateEvent::response || update_event._event_id == ServiceUpdateEvent::UpdateEvent::notify_alive;
 
-
-                    if(update_event._event_id == ServiceUpdateEvent::UpdateEvent::response || update_event._event_id == ServiceUpdateEvent::UpdateEvent::notify_alive)
-                    {
-
-                    }
-
-                    cb.setUltrasonicOnline(device == ULTRA_SERVICE);
-                    cb.setAccelerometerOnline(device == ACCEL_SERVICE);
-                    cb.setActuatorOnline(device == LED_SERVICE);
+                    cb.setUltrasonicOnline(device == ULTRA_SERVICE && serviceEnabled);
+                    cb.setAccelerometerOnline(device == ACCEL_SERVICE && serviceEnabled);
+                    cb.setActuatorOnline(device == LED_SERVICE && serviceEnabled);
                 },
                 std::chrono::seconds(1)); // Timeout after 1 second
         } while(runssdp);
