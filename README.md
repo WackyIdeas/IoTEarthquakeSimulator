@@ -2,7 +2,7 @@
 
 ## Requirements: 
 
-- Linux environment, will likely not work on Windows
+- Linux environment
 - Docker 
 
 ## EMQX Broker 
