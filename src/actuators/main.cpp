@@ -81,9 +81,9 @@ int main()
     while(ledService.listenToBroadcast(&serverAddr))
     {
         log("ssdp", "MSearch successful");
-        log("ssdp", serverAddr);
         if(!serviceStarted && serverAddr != "")
         {
+            log("ssdp", std::string("Connecting to MQTT Broker ") + serverAddr);
             client = new Client(clientname, serverAddr);
             serviceStarted = true;
             log(client->name(), "Starting MQTT service");

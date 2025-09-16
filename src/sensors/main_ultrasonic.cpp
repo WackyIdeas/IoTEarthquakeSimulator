@@ -72,9 +72,9 @@ int main()
     while(!finishedSimulation && ultrasonicService.listenToBroadcast(&serverAddr))
     {
         log("ssdp", "MSearch successful");
-        log("ssdp", serverAddr);
         if(!serviceStarted && serverAddr != "")
         {
+            log("ssdp", std::string("Connecting to MQTT Broker ") + serverAddr);
             log("mqtt", "Starting MQTT service...");
             serviceStarted = true;
             std::thread(mqttService).detach();
