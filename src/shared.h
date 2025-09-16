@@ -13,7 +13,6 @@
 
 // Broker address
 #define SERVER_PORT 1883
-#define SERVER_ADDR "tcp://localhost:1883"
 #define ACCEL_TOPIC "building/accel"
 #define ULTRA_TOPIC "building/ultra"
 #define STATUS_TOPIC "building/status"

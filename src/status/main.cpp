@@ -42,9 +42,19 @@ class callback : public virtual mqtt::callback
     }
 };
 
-int main()
+int main(int argc, char* argv[])
 {
-    Client client(clientname, SERVER_ADDR);
+    std::string serverAddr = "";
+    if(argc == 1)
+    {
+        log(clientname, "Broker address is required!");
+        return 1;
+    }
+    else
+    {
+        serverAddr = argv[1];
+    }
+    Client client(clientname, serverAddr);
     if(!client.connectClient())
     {
         return 1;

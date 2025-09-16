@@ -159,7 +159,7 @@ public:
 
 int main()
 {
-    Client client("controller", SERVER_ADDR);
+    Client client("controller", "tcp://localhost:1883");
     if(!client.connectClient())
     {
         return 1;
