@@ -19,53 +19,66 @@ void sigintHandler(int dummy)
 
 int main()
 {
-    Sensor accelerometer("../data/accelerometer.json", 1000);
 
-    if(!accelerometer.loaded())
-    {
-        return 1;
-    }
-
-    Client client("pub_accelerometer");
-    if(!client.connectClient())
-    {
-        return 1;
-    }
-
+    volatile bool finishedSimulation = false;
     Service accelerometerService(
-        "building/accelerometer",   
-        "service/accelerometer",    
-        "accelerometer",            
-        "IoTSensor",             
-        "1.0"                    
+        "building/accelerometer",
+        ACCEL_SERVICE,
+        "accelerometer",
+        "IoTSensor",
+        "1.0"
     );
+    auto mqttService = [&]() -> int {
+        Sensor accelerometer("../data/accelerometer.json", 1000);
+
+        if(!accelerometer.loaded())
+        {
+            accelerometerService.byebye();
+            finishedSimulation = true;
+            return 1;
+        }
+
+        Client client("pub_accelerometer", SERVER_ADDR);
+        if(!client.connectClient())
+        {
+            accelerometerService.byebye();
+            finishedSimulation = true;
+            return 1;
+        }
+
+        while(!accelerometer.reachedEnd())
+        {
+            std::string sample = accelerometer.getSample();
+            if(sample == "")
+            {
+                break;
+            }
+            client.publish(ACCEL_TOPIC, sample);
+            log(client.name(), std::string("Sent sample: ") + sample);
+            std::this_thread::sleep_for(std::chrono::milliseconds(accelerometer.period()));
+        }
+
+        log(client.name(), "Finished simulation.");
+        accelerometerService.byebye();
+        finishedSimulation = true;
+        return 0;
+    };
 
     ref = &accelerometerService;
     signal(SIGINT, sigintHandler);
 
-    std::thread ssdpThread([&](){
-    if(!accelerometerService.listenToBroadcast())
+    bool serviceStarted = false;
+    while(!finishedSimulation && accelerometerService.listenToBroadcast())
     {
-        log("pub_accelerometer", "Something wrong happened with SSDP discovery", true);
-    }
-    });
-
-    while(!accelerometer.reachedEnd())
-    {
-        std::string sample = accelerometer.getSample();
-        if(sample == "")
+        log("ssdp", "MSearch successful");
+        if(!serviceStarted)
         {
-            break;
+            log("mqtt", "Starting MQTT service...");
+            serviceStarted = true;
+            std::thread(mqttService).detach();
         }
-        client.publish(ACCEL_TOPIC, sample);
-        log(client.name(), std::string("Sent sample: ") + sample);
-        std::this_thread::sleep_for(std::chrono::milliseconds(accelerometer.period()));
     }
 
-    log(client.name(), "Finished simulation.");
-
-    accelerometerService.byebye();
-    client.disconnectClient();
     return 0;
 }
 

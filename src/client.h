@@ -9,7 +9,7 @@
 class Client
 {
 public:
-    Client(std::string name);
+    Client(std::string name, std::string addr);
     ~Client();
 
     bool connectClient();
@@ -48,11 +48,13 @@ public:
      */
     void setCallback(mqtt::callback &cb);
     std::string name() const;
+    std::string address() const;
     bool connected() const;
 
 private:
     mqtt::async_client *m_client;
     std::string m_name;
+    std::string m_addr;
     bool m_connected = false;
 };
 

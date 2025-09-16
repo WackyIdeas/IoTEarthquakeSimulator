@@ -1,4 +1,5 @@
 #include "service.h"
+#include <functional>
 
 void Service::byebye()
 {
@@ -44,20 +45,16 @@ bool Service::listenToBroadcast()
     if(!m_running) return false;
     try
     {
-        do
+        log(m_uid, "Checking for MSearch queries...");
+        if(!m_service->checkForMSearchAndSendResponse(std::chrono::seconds(1)))
         {
-            log(m_uid, "Checking for MSearch queries...");
-            if(!m_service->checkForMSearchAndSendResponse(std::chrono::seconds(1)))
-            {
-                log(m_uid, m_service->getLastSendErrors(), true);
-            }
-
-        } while(m_running);
+            log(m_uid, m_service->getLastSendErrors(), true);
+            return false;
+        }
     }
     catch(std::exception &e)
     {
         log(m_uid, e.what(), true);
-        m_running = false;
         return false;
     }
     return true;

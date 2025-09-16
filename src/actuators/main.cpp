@@ -1,6 +1,6 @@
 #include "../shared.h"
 #include "../service.h"
-
+#include <thread>
 #include <signal.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -54,21 +54,13 @@ class callback : public virtual mqtt::callback
 
 int main()
 {
-    Client client(clientname);
 
-    if(!client.connectClient())
-    {
-        return 1;
-    }
-
+    Client client(clientname, SERVER_ADDR);
     callback cb;
-    client.setCallback(cb);
-
-    client.subscribe(LED_TOPIC);
 
     Service ledService(
         "building/led",
-        "service/led",
+        LED_SERVICE,
         "led",
         "IoTActuator",
         "1.0"
@@ -78,10 +70,22 @@ int main()
 
     signal(SIGINT, sigintHandler);
 
-    if(!ledService.listenToBroadcast())
+    bool serviceStarted = false;
+    while(ledService.listenToBroadcast())
     {
-        log(clientname, "Something wrong happened with SSDP discovery", true);
-        return -1;
+        log("ssdp", "MSearch successful");
+        if(!serviceStarted)
+        {
+            serviceStarted = true;
+            log(client.name(), "Starting MQTT service");
+            if(!client.connectClient())
+            {
+                ledService.byebye();
+                return 1;
+            }
+            client.setCallback(cb);
+            client.subscribe(LED_TOPIC);
+        }
     }
 
     client.disconnectClient();

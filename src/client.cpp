@@ -1,13 +1,18 @@
 #include "client.h"
-Client::Client(std::string name)
+Client::Client(std::string name, std::string addr)
 {
     m_name = name;
-    m_client = new mqtt::async_client(SERVER_ADDR, name);
+    m_addr = addr;
+    m_client = new mqtt::async_client(addr, name);
 }
 Client::~Client()
 {
     if(connected()) disconnectClient();
     delete m_client;
+}
+std::string Client::address() const
+{
+    return m_addr;
 }
 
 bool Client::connectClient()

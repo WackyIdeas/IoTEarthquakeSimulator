@@ -19,53 +19,66 @@ void sigintHandler(int dummy)
 
 int main()
 {
-    Sensor ultrasonic("../data/ultrasonic.json", 1000);
 
-    if(!ultrasonic.loaded())
-    {
-        return 1;
-    }
-
-    Client client("pub_ultrasonic");
-    if(!client.connectClient())
-    {
-        return 1;
-    }
-
+    volatile bool finishedSimulation = false;
     Service ultrasonicService(
-        "building/ultrasonic",   
-        "service/ultrasonic",    
-        "ultrasonic",            
-        "IoTSensor",             
-        "1.0"                    
+        "building/ultrasonic",
+        ULTRA_SERVICE,
+        "ultrasonic",
+        "IoTSensor",
+        "1.0"
     );
+    auto mqttService = [&]() -> int {
+        Sensor ultrasonic("../data/ultrasonic.json", 1000);
+
+        if(!ultrasonic.loaded())
+        {
+            ultrasonicService.byebye();
+            finishedSimulation = true;
+            return 1;
+        }
+
+        Client client("pub_ultrasonic", SERVER_ADDR);
+        if(!client.connectClient())
+        {
+            ultrasonicService.byebye();
+            finishedSimulation = true;
+            return 1;
+        }
+
+        while(!ultrasonic.reachedEnd())
+        {
+            std::string sample = ultrasonic.getSample();
+            if(sample == "")
+            {
+                break;
+            }
+            client.publish(ULTRA_TOPIC, sample);
+            log(client.name(), std::string("Sent sample: ") + sample);
+            std::this_thread::sleep_for(std::chrono::milliseconds(ultrasonic.period()));
+        }
+
+        log(client.name(), "Finished simulation.");
+        ultrasonicService.byebye();
+        finishedSimulation = true;
+        return 0;
+
+    };
 
     ref = &ultrasonicService;
     signal(SIGINT, sigintHandler);
 
-    std::thread ssdpThread([&](){
-    if(!ultrasonicService.listenToBroadcast())
+    bool serviceStarted = false;
+    while(!finishedSimulation && ultrasonicService.listenToBroadcast())
     {
-        log("pub_ultrasonic", "Something wrong happened with SSDP discovery", true);
-    }
-    });
-
-
-    while(!ultrasonic.reachedEnd())
-    {
-        std::string sample = ultrasonic.getSample();
-        if(sample == "")
+        log("ssdp", "MSearch successful");
+        if(!serviceStarted)
         {
-            break;
+            log("mqtt", "Starting MQTT service...");
+            serviceStarted = true;
+            std::thread(mqttService).detach();
         }
-        client.publish(ULTRA_TOPIC, sample);
-        log(client.name(), std::string("Sent sample: ") + sample);
-        std::this_thread::sleep_for(std::chrono::milliseconds(ultrasonic.period()));
     }
 
-    log(client.name(), "Finished simulation.");
-
-    ultrasonicService.byebye();
-    client.disconnectClient();
     return 0;
 }

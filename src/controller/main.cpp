@@ -3,7 +3,6 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-bool accelerometer_online = false, ultrasonic_online = false;
 
 class callback : public virtual mqtt::callback
 {
@@ -12,10 +11,15 @@ class callback : public virtual mqtt::callback
     Client *parent;
     json accelerometer_data;
     json ultrasonic_data;
+    bool accelerometer_online = false;
+    bool ultrasonic_online = false;
+    bool actuator_online = false;
+
     void message_arrived(mqtt::const_message_ptr msg) override
     {
         try
         {
+
             if(msg->get_topic() == ACCEL_TOPIC)
             {
                 accelerometer_data = json::parse(msg->get_payload_str());
@@ -29,8 +33,9 @@ class callback : public virtual mqtt::callback
             auto ts = getTimestamp();
             json status;
             status["timestamp"] = ts;
-            status["ultrasonic"] = ultrasonic_data.is_null() ? "Off (!!)" : "On";
-            status["accelerometer"] = accelerometer_data.is_null() ? "Off (!!)" : "On";
+            status["ultrasonic"] = !ultrasonic_online ? "Off (!!)" : "On";
+            status["accelerometer"] = !accelerometer_online ? "Off (!!)" : "On";
+            status["actuator"] = !actuator_online ? "Off (!!)" : "On";
 
             // Actuator
             json target;
@@ -94,25 +99,16 @@ class callback : public virtual mqtt::callback
             if(total_threshold == 0)
             {
                 actuatorstate = "safe";
-                status["actuator"] = "Off";
             }
             else if(total_threshold < 3)
             {
                 actuatorstate = "warning";
-                status["actuator"] = "On";
             }
             else if(total_threshold >= 3)
             {
                 actuatorstate = "critical";
-                status["actuator"] = "On";
-            }
-            else
-            {
-                status["actuator"] = "N/A";
-
             }
             target["state"] = actuatorstate;
-            status["severity"] = total_threshold;
 
             // Publish messages, with sanity checks
             if(parent)
@@ -139,11 +135,23 @@ public:
     {
         parent = c;
     }
+    void setAccelerometerOnline(bool b)
+    {
+        accelerometer_online = b;
+    }
+    void setUltrasonicOnline(bool b)
+    {
+        ultrasonic_online = b;
+    }
+    void setActuatorOnline(bool b)
+    {
+        actuator_online = b;
+    }
 };
 
 int main()
 {
-    Client client("controller");
+    Client client("controller", SERVER_ADDR);
     if(!client.connectClient())
     {
         return 1;
@@ -190,11 +198,20 @@ int main()
                     log(client.name(), "Received message from service:");
                     std::cout << update_event << std::endl;
 
-                    std::string device = update_event._service_description.getDeviceType();
-                    if(device.find("ultrasonic") != std::string::npos)
-                        ultrasonic_online = true;
-                    else if(device.find("accelerometer") != std::string::npos)
-                        accelerometer_online = true;
+                    std::cout << "BRUH\n";
+                    std::string device = update_event._service_description.getUniqueServiceName();
+                    log(client.name(), device);
+
+
+
+                    if(update_event._event_id == ServiceUpdateEvent::UpdateEvent::response || update_event._event_id == ServiceUpdateEvent::UpdateEvent::notify_alive)
+                    {
+
+                    }
+
+                    cb.setUltrasonicOnline(device == ULTRA_SERVICE);
+                    cb.setAccelerometerOnline(device == ACCEL_SERVICE);
+                    cb.setActuatorOnline(device == LED_SERVICE);
                 },
                 std::chrono::seconds(1)); // Timeout after 1 second
         } while(runssdp);
