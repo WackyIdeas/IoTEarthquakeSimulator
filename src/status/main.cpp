@@ -23,10 +23,9 @@ class callback : public virtual mqtt::callback
             std::string ul = results["ultrasonic"].template get<std::string>();
             std::string ac = results["accelerometer"].template get<std::string>();
             std::string al = results["actuator"].template get<std::string>();
-            std::string st = results["state"].template get<std::string>();
             ts.pop_back();
 
-            std::string sv = std::to_string(results["severity"].template get<int>());
+            std::string sv = results["severity"].template get<std::string>();
 
             output += std::string("\t[") + ts + std::string("]\n");
             output += std::string("\tUltrasonic sensor: ") + ul + std::string("\n");

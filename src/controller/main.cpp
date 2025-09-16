@@ -15,6 +15,8 @@ class callback : public virtual mqtt::callback
     bool ultrasonic_online = false;
     bool actuator_online = false;
 
+    std::string severity_status = "N/A";
+
     void message_arrived(mqtt::const_message_ptr msg) override
     {
         try
@@ -31,11 +33,6 @@ class callback : public virtual mqtt::callback
             }
 
             auto ts = getTimestamp();
-            json status;
-            status["timestamp"] = ts;
-            status["ultrasonic"] = !ultrasonic_online ? "Off (!!)" : "On";
-            status["accelerometer"] = !accelerometer_online ? "Off (!!)" : "On";
-            status["actuator"] = !actuator_online ? "Off (!!)" : "On";
 
             // Actuator
             json target;
@@ -109,18 +106,13 @@ class callback : public virtual mqtt::callback
                 actuatorstate = "critical";
             }
             target["state"] = actuatorstate;
+            severity_status = actuatorstate;
 
             // Publish messages, with sanity checks
             if(parent)
             {
                 log(parent->name(), std::string("Message received: ") + msg->get_payload_str());
                 parent->publish(LED_TOPIC, target.dump(), 1, true);
-
-                if(!status.is_null())
-                {
-                    parent->publish(STATUS_TOPIC, status.dump(), 1, true);
-                }
-
             }
 
         }
@@ -146,6 +138,22 @@ public:
     void setActuatorOnline(bool b)
     {
         actuator_online = b;
+    }
+    std::string severity() const
+    {
+        return severity_status;
+    }
+    bool actuatorOnline() const
+    {
+        return actuator_online;
+    }
+    bool accelerometerOnline() const
+    {
+        return accelerometer_online;
+    }
+    bool ultrasonicOnline() const
+    {
+        return ultrasonic_online;
     }
 };
 
@@ -192,7 +200,7 @@ int main()
                 ssdpController.sendMSearch();
             }
 
-            ssdpController.checkForServices(
+            if(ssdpController.checkForServices(
                 [&](const lssdp::ServiceFinder::ServiceUpdateEvent& update_event)
                 {
                     log(client.name(), "Received message from service:");
@@ -201,13 +209,36 @@ int main()
                     std::string device = update_event._service_description.getUniqueServiceName();
                     log(client.name(), device);
 
-                    bool serviceEnabled = update_event._event_id == ServiceUpdateEvent::UpdateEvent::response || update_event._event_id == ServiceUpdateEvent::UpdateEvent::notify_alive;
+                    bool serviceEnabled = update_event._event_id == lssdp::ServiceFinder::ServiceUpdateEvent::UpdateEvent::response || update_event._event_id == lssdp::ServiceFinder::ServiceUpdateEvent::UpdateEvent::notify_alive;
 
-                    cb.setUltrasonicOnline(device == ULTRA_SERVICE && serviceEnabled);
-                    cb.setAccelerometerOnline(device == ACCEL_SERVICE && serviceEnabled);
-                    cb.setActuatorOnline(device == LED_SERVICE && serviceEnabled);
+                    if(device == ULTRA_SERVICE)
+                    {
+                        cb.setUltrasonicOnline(serviceEnabled);
+                    }
+                    else if(device == ACCEL_SERVICE)
+                    {
+                        cb.setAccelerometerOnline(serviceEnabled);
+                    }
+                    else if(device == LED_SERVICE)
+                    {
+                        cb.setActuatorOnline(serviceEnabled);
+                    }
                 },
-                std::chrono::seconds(1)); // Timeout after 1 second
+                std::chrono::seconds(1)))
+                {
+                    // Publish to status topic
+                    auto ts = getTimestamp();
+                    json status;
+                    status["timestamp"] = ts;
+                    status["ultrasonic"] = !cb.ultrasonicOnline() ? "Off (!!)" : "On";
+                    status["accelerometer"] = !cb.accelerometerOnline() ? "Off (!!)" : "On";
+                    status["actuator"] = !cb.actuatorOnline() ? "Off (!!)" : "On";
+                    status["severity"] = cb.severity();
+                    if(!status.is_null())
+                    {
+                        client.publish(STATUS_TOPIC, status.dump(), 1, true);
+                    }
+                } // Timeout after 1 second
         } while(runssdp);
 
     }
