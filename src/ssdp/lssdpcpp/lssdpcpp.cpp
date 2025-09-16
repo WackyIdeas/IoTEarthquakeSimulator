@@ -1289,7 +1289,7 @@ bool Service::sendNotifyByeBye()
     return _impl->sendNotify(Impl::byebye);
 }
 
-bool Service::checkForMSearchAndSendResponse(std::chrono::milliseconds timeout)
+bool Service::checkForMSearchAndSendResponse(std::chrono::milliseconds timeout, std::string *sender_addr)
 {
     fd_set fs;
     FD_ZERO(&fs);
@@ -1336,6 +1336,10 @@ bool Service::checkForMSearchAndSendResponse(std::chrono::milliseconds timeout)
                     if (strcmp(packet.second._st, LSSDP_SEARCH_TARGET_ALL) == 0
                         || strcmp(packet.second._st, _impl->getSearchTarget().c_str()) == 0)
                     {
+                        struct in_addr ip_addr;
+                        ip_addr.s_addr = packet.second._received_from;
+                        (*sender_addr) = std::string("tcp://") + inet_ntoa(ip_addr) + std::string(":1883");
+
                         if (!_impl->sendResponse(packet.second._received_from))
                         {
                             error_while_sending = true;

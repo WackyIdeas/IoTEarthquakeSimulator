@@ -19,7 +19,7 @@ void sigintHandler(int dummy)
 
 int main()
 {
-
+    std::string serverAddr = "";
     volatile bool finishedSimulation = false;
     Service accelerometerService(
         "building/accelerometer",
@@ -38,7 +38,7 @@ int main()
             return 1;
         }
 
-        Client client("pub_accelerometer", SERVER_ADDR);
+        Client client("pub_accelerometer", serverAddr);
         if(!client.connectClient())
         {
             accelerometerService.byebye();
@@ -68,10 +68,11 @@ int main()
     signal(SIGINT, sigintHandler);
 
     bool serviceStarted = false;
-    while(!finishedSimulation && accelerometerService.listenToBroadcast())
+    while(!finishedSimulation && accelerometerService.listenToBroadcast(&serverAddr))
     {
         log("ssdp", "MSearch successful");
-        if(!serviceStarted)
+        log("ssdp", serverAddr);
+        if(!serviceStarted && serverAddr != "")
         {
             log("mqtt", "Starting MQTT service...");
             serviceStarted = true;

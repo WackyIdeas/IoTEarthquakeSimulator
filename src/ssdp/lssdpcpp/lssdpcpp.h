@@ -387,7 +387,7 @@ public:
      * @remark The *OK* messages will NOT contain "UPnP/1.1" 
      *         as version within the *SERVER:* tag!
      */
-    bool checkForMSearchAndSendResponse(std::chrono::milliseconds timeout);
+    bool checkForMSearchAndSendResponse(std::chrono::milliseconds timeout, std::string *sender_addr);
 
     /**
      * @brief Convinience equality operator

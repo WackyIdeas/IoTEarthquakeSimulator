@@ -19,6 +19,7 @@ void sigintHandler(int dummy)
 }
 class callback : public virtual mqtt::callback
 {
+    std::string serverAddr = "";
     std::string dataset = "../data/actuator_state.json";
     void message_arrived(mqtt::const_message_ptr msg) override
     {
@@ -50,12 +51,18 @@ class callback : public virtual mqtt::callback
         }
 
     }
+public:
+    void setServerAddr(std::string s)
+    {
+        serverAddr = s;
+    }
 };
 
 int main()
 {
+    std::string serverAddr = "";
 
-    Client client(clientname, SERVER_ADDR);
+    Client *client;
     callback cb;
 
     Service ledService(
@@ -71,23 +78,27 @@ int main()
     signal(SIGINT, sigintHandler);
 
     bool serviceStarted = false;
-    while(ledService.listenToBroadcast())
+    while(ledService.listenToBroadcast(&serverAddr))
     {
         log("ssdp", "MSearch successful");
-        if(!serviceStarted)
+        log("ssdp", serverAddr);
+        if(!serviceStarted && serverAddr != "")
         {
+            client = new Client(clientname, serverAddr);
             serviceStarted = true;
-            log(client.name(), "Starting MQTT service");
-            if(!client.connectClient())
+            log(client->name(), "Starting MQTT service");
+            if(!client->connectClient())
             {
                 ledService.byebye();
                 return 1;
             }
-            client.setCallback(cb);
-            client.subscribe(LED_TOPIC);
+            cb.setServerAddr(serverAddr);
+            client->setCallback(cb);
+            client->subscribe(LED_TOPIC);
         }
     }
 
-    client.disconnectClient();
+    client->disconnectClient();
+    delete client;
     return 0;
 }

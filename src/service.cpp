@@ -40,13 +40,13 @@ Service::~Service()
     }
 }
 
-bool Service::listenToBroadcast()
+bool Service::listenToBroadcast(std::string *sender_addr)
 {
     if(!m_running) return false;
     try
     {
         log(m_uid, "Checking for MSearch queries...");
-        if(!m_service->checkForMSearchAndSendResponse(std::chrono::seconds(1)))
+        if(!m_service->checkForMSearchAndSendResponse(std::chrono::seconds(1), sender_addr))
         {
             log(m_uid, m_service->getLastSendErrors(), true);
             return false;

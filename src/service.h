@@ -10,7 +10,7 @@ public:
     Service(std::string location, std::string uid, std::string search_target, std::string productName, std::string version);
     ~Service();
 
-    bool listenToBroadcast();
+    bool listenToBroadcast(std::string *sender_addr);
     void byebye();
 
 private:

@@ -19,7 +19,7 @@ void sigintHandler(int dummy)
 
 int main()
 {
-
+    std::string serverAddr = "";
     volatile bool finishedSimulation = false;
     Service ultrasonicService(
         "building/ultrasonic",
@@ -38,7 +38,7 @@ int main()
             return 1;
         }
 
-        Client client("pub_ultrasonic", SERVER_ADDR);
+        Client client("pub_ultrasonic", serverAddr);
         if(!client.connectClient())
         {
             ultrasonicService.byebye();
@@ -69,10 +69,11 @@ int main()
     signal(SIGINT, sigintHandler);
 
     bool serviceStarted = false;
-    while(!finishedSimulation && ultrasonicService.listenToBroadcast())
+    while(!finishedSimulation && ultrasonicService.listenToBroadcast(&serverAddr))
     {
         log("ssdp", "MSearch successful");
-        if(!serviceStarted)
+        log("ssdp", serverAddr);
+        if(!serviceStarted && serverAddr != "")
         {
             log("mqtt", "Starting MQTT service...");
             serviceStarted = true;
