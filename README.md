@@ -68,8 +68,19 @@ $ sh install.sh --ninja
 
 # Notes
 
-- SSDP must be enabled in the firewall in order for SSDP discovery to work
+- It's assumed that the MQTT controller node also acts as the root controller (SSDP) and runs the MQTT broker. 
+- SSDP and MQTT related ports must be enabled in the firewall in order for SSDP discovery and the MQTT broker to work correctly across the local network
+
+# Features
+
+- Manages node discovery through SSDP via broadcast IP
+- SSDP: support for discovery (M-SEARCH) and advertisement (NOTIFY; ssdp:alive, ssdp:byebye)
+- Most other nodes connect to the controller node by getting the sender IP via SSDP
+- Reading and writing from/to JSON files as part of a loose simulation/proof of concept
+- Sending and receiving serialized (un)retained JSON messages via MQTT topics
 
 # Credits 
 
+- [EMQX](https://github.com/emqx/emqx)
+- [paho.mqtt.cpp](https://github.com/eclipse-paho/paho.mqtt.cpp)
 - [lssdp-cpp](https://github.com/jeanreP/lssdp-cpp)
